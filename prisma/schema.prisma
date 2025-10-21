@@ -101,6 +101,11 @@ model solicitud {
   @@index([placa_vehiculo], map: "placa_vehiculo")
 }
 
+model prueba {
+  id_prueba Int     @id @default(autoincrement())
+  texto     String? @db.Text
+}
+
 enum conductor_vehiculo_tipo_conductor {
   habitual
   eventual
