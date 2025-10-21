@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model conductor_vehiculo {
+  placa_vehiculo   String                             @db.VarChar(30)
+  cedula_conductor Int
+  tipo_conductor   conductor_vehiculo_tipo_conductor?
+  vehiculo         vehiculo                           @relation(fields: [placa_vehiculo], references: [placa], onUpdate: Restrict, map: "conductor_vehiculo_ibfk_1")
+  usuario          usuario                            @relation(fields: [cedula_conductor], references: [cedula], onUpdate: Restrict, map: "conductor_vehiculo_ibfk_2")
+
+  @@id([placa_vehiculo, cedula_conductor])
+  @@index([cedula_conductor], map: "cedula_conductor")
+}
+
+model inspeccion_preoperacional {
+  id_inspeccion                       Int                                          @id @default(autoincrement())
+  placa_vehiculo                      String?                                      @db.VarChar(30)
+  cedula_conductor                    Int?
+  fecha                               DateTime?                                    @db.Date
+  descanso_adecuando                  Boolean?
+  consumo_alcohol                     Boolean?
+  medicamentos_que_afecten_conduccion Boolean?
+  condiciones_fisicas_mentales        Boolean?
+  soat_vigente                        Boolean?
+  tecnico_mecanica                    Boolean?
+  estado_llantas                      inspeccion_preoperacional_estado_llantas?
+  estado_luces                        inspeccion_preoperacional_estado_luces?
+  estado_frenos                       inspeccion_preoperacional_estado_frenos?
+  nivel_combustible                   inspeccion_preoperacional_nivel_combustible?
+  vehiculo                            vehiculo?                                    @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_1")
+  usuario                             usuario?                                     @relation(fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_2")
+
+  @@index([cedula_conductor], map: "cedula_conductor")
+  @@index([placa_vehiculo], map: "placa_vehiculo")
+}
+
+model rol {
+  id_rol     Int       @id @default(autoincrement())
+  nombre_rol String    @db.VarChar(50)
+  usuario    usuario[]
+}
+
+model usuario {
+  cedula                                          Int                         @id
+  nombre                                          String                      @db.VarChar(255)
+  correo                                          String                      @unique(map: "correo") @db.VarChar(255)
+  contrasenia                                     String                      @db.VarChar(255)
+  telefono                                        Int?
+  id_rol                                          Int?
+  conductor_vehiculo                              conductor_vehiculo[]
+  inspeccion_preoperacional                       inspeccion_preoperacional[]
+  solicitud_solicitud_cedula_solicitanteTousuario solicitud[]                 @relation("solicitud_cedula_solicitanteTousuario")
+  solicitud_solicitud_cedula_conductorTousuario   solicitud[]                 @relation("solicitud_cedula_conductorTousuario")
+  rol                                             rol?                        @relation(fields: [id_rol], references: [id_rol], onDelete: Restrict, onUpdate: Restrict, map: "usuario_ibfk_1")
+
+  @@index([id_rol], map: "id_rol")
+}
+
+model vehiculo {
+  placa                      String                      @id @db.VarChar(30)
+  tipo_vehiculo              String?                     @db.VarChar(100)
+  capacidad                  Int?
+  odometro                   Int?
+  estado                     vehiculo_estado?            @default(disponible)
+  fecha_ultimo_mantenimiento DateTime?                   @db.Date
+  conductor_vehiculo         conductor_vehiculo[]
+  inspeccion_preoperacional  inspeccion_preoperacional[]
+  solicitud                  solicitud[]
+}
+
+model solicitud {
+  id_solicitud                                  Int                   @id @default(autoincrement())
+  cedula_solicitante                            Int?
+  placa_vehiculo                                String?               @db.VarChar(30)
+  cedula_conductor                              Int?
+  fecha                                         DateTime?             @db.Date
+  hora                                          DateTime?             @db.Time(0)
+  origen                                        String?               @db.VarChar(250)
+  destino                                       String?               @db.VarChar(250)
+  estado                                        solicitud_estado?     @default(pendiente)
+  tipo_labor                                    solicitud_tipo_labor?
+  prioridad                                     solicitud_prioridad?
+  cantidad_pasajeros                            Int?
+  equipo_o_carga                                String?               @db.VarChar(250)
+  observaciones                                 String?               @db.Text
+  hora_inicio_transporte                        DateTime?             @db.Time(0)
+  hora_fin_transporte                           DateTime?             @db.Time(0)
+  vehiculo                                      vehiculo?             @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_1")
+  usuario_solicitud_cedula_solicitanteTousuario usuario?              @relation("solicitud_cedula_solicitanteTousuario", fields: [cedula_solicitante], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_2")
+  usuario_solicitud_cedula_conductorTousuario   usuario?              @relation("solicitud_cedula_conductorTousuario", fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_3")
+
+  @@index([cedula_conductor], map: "cedula_conductor")
+  @@index([cedula_solicitante], map: "cedula_solicitante")
+  @@index([placa_vehiculo], map: "placa_vehiculo")
+}
+
+enum conductor_vehiculo_tipo_conductor {
+  habitual
+  eventual
+}
+
+enum vehiculo_estado {
+  disponible
+  no_disponible @map("no disponible")
+  asignado
+}
+
+enum inspeccion_preoperacional_estado_llantas {
+  bueno
+  regular
+  malo
+}
+
+enum inspeccion_preoperacional_estado_luces {
+  bueno
+  regular
+  malo
+}
+
+enum inspeccion_preoperacional_estado_frenos {
+  bueno
+  regular
+  malo
+}
+
+enum inspeccion_preoperacional_nivel_combustible {
+  lleno
+  medio
+  bajo
+}
+
+enum solicitud_estado {
+  pendiente
+  asignada
+  aceptada
+  en_progreso     @map("en progreso")
+  finalizada
+  cancelada
+  en_reasignacion @map("en reasignacion")
+}
+
+enum solicitud_tipo_labor {
+  inspeccion_tecnica @map("inspeccion tecnica")
+  mantenimiento
+  reparacion
+  reunion
+}
+
+enum solicitud_prioridad {
+  baja
+  media
+  alta
+}
