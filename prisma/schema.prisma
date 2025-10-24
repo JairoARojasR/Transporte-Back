@@ -65,10 +65,10 @@ model usuario {
 
 model vehiculo {
   placa                      String                      @id @db.VarChar(30)
-  tipo_vehiculo              String?                     @db.VarChar(100)
+  tipo_vehiculo              vehiculo_tipo_vehiculo
   capacidad                  Int?
   odometro                   Int?
-  estado                     vehiculo_estado?            @default(disponible)
+  estado                     vehiculo_estado             @default(disponible)
   fecha_ultimo_mantenimiento DateTime?                   @db.Date
   conductor_vehiculo         conductor_vehiculo[]
   inspeccion_preoperacional  inspeccion_preoperacional[]
@@ -84,7 +84,7 @@ model solicitud {
   hora                                          DateTime?             @db.Time(0)
   origen                                        String?               @db.VarChar(250)
   destino                                       String?               @db.VarChar(250)
-  estado                                        solicitud_estado?     @default(pendiente)
+  estado                                        solicitud_estado      @default(pendiente)
   tipo_labor                                    solicitud_tipo_labor?
   prioridad                                     solicitud_prioridad?
   cantidad_pasajeros                            Int?
@@ -101,20 +101,9 @@ model solicitud {
   @@index([placa_vehiculo], map: "placa_vehiculo")
 }
 
-model prueba {
-  id_prueba Int     @id @default(autoincrement())
-  texto     String? @db.Text
-}
-
 enum conductor_vehiculo_tipo_conductor {
   habitual
   eventual
-}
-
-enum vehiculo_estado {
-  disponible
-  no_disponible @map("no disponible")
-  asignado
 }
 
 enum inspeccion_preoperacional_estado_llantas {
@@ -141,25 +130,38 @@ enum inspeccion_preoperacional_nivel_combustible {
   bajo
 }
 
-enum solicitud_estado {
-  pendiente
-  asignada
-  aceptada
-  en_progreso     @map("en progreso")
-  finalizada
-  cancelada
-  en_reasignacion @map("en reasignacion")
-}
-
-enum solicitud_tipo_labor {
-  inspeccion_tecnica @map("inspeccion tecnica")
-  mantenimiento
-  reparacion
-  reunion
-}
-
 enum solicitud_prioridad {
   baja
   media
   alta
+}
+
+enum vehiculo_estado {
+  disponible
+  no_disponible
+  asignado
+}
+
+enum solicitud_estado {
+  pendiente
+  asignada
+  aceptada
+  en_progreso
+  finalizada
+  cancelada
+  en_reasignacion
+}
+
+enum solicitud_tipo_labor {
+  mantenimiento
+  reparacion
+  reunion
+  inspeccion_tecnica
+}
+
+enum vehiculo_tipo_vehiculo {
+  carrotanque
+  camion
+  camioneta
+  retroexcavadora
 }
