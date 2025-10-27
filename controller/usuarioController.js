@@ -53,10 +53,34 @@ export const obtenerUsuariosPorRol = async (req, res) => {
       where: {
         id_rol: id,
       },
+      select: {
+        cedula: true,
+        nombre: true,
+        id_rol: true,
+      },
     });
     res.status(200).json(usuarios);
   } catch (error) {
     console.error("Error al obtener usuarios", error);
-    res.status(500).json({error: "Error al obtener usuarios"})
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+};
+
+export const obtenerConductores = async (req, res) => {
+  try {
+    const conductores = await prisma.usuario.findMany({
+      where: {
+        id_rol: 8,
+      },
+      select: {
+        cedula: true,
+        nombre: true,
+        id_rol: true
+      }
+    });
+    res.status(200).json(conductores);
+  } catch (error) {
+    console.error("Error al obtener conductores", error);
+    res.status(500).json({ error: "Error al obtener conductores" });
   }
 };

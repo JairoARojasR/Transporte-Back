@@ -47,7 +47,7 @@ export const crearVehiculo = async (req, res) => {
         capacidad,
         odometro,
         estado,
-        fecha_ultimo_mantenimiento,
+        fecha_ultimo_mantenimiento: new Date(fecha_ultimo_mantenimiento),
         conductor_vehiculo: {
           create: conductores.map((c) => ({
             cedula_conductor: Number(c.cedula_conductor),
@@ -61,6 +61,7 @@ export const crearVehiculo = async (req, res) => {
     });
     res.status(201).json(nuevoVehiculo);
   } catch (error) {
+    console.log(error)
     res.status(500).json({ error: "Error al crear el vehículo" });
   }
 };
