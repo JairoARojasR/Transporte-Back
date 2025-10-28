@@ -61,7 +61,7 @@ export const crearVehiculo = async (req, res) => {
     });
     res.status(201).json(nuevoVehiculo);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ error: "Error al crear el vehículo" });
   }
 };
@@ -96,11 +96,73 @@ export const obtenerVehiculos = async (req, res) => {
   try {
     const vehiculos = await prisma.vehiculo.findMany({
       include: {
-        conductor_vehiculo: true,
+        conductor_vehiculo: {
+          select: {
+            placa_vehiculo: true,
+            cedula_conductor: true,
+            tipo_conductor: true,
+            usuario: {
+              select: {
+                cedula: true,
+                nombre: true,
+              },
+            },
+          },
+        },
       },
     });
-    res.status(200).json(vehiculos);
+
+    const vehiculosConConductor = vehiculos.map((vehiculo) => ({
+      ...vehiculo,
+      conductores: vehiculo.conductor_vehiculo.map((conductor) => ({
+        cedula_conductor: conductor.cedula_conductor,
+        tipo_conductor: conductor.tipo_conductor,
+        usuario: conductor.usuario,
+      })),
+    }));
+
+    res.status(200).json(vehiculosConConductor);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener vehiculos" });
+  }
+};
+
+export const obtenerVehiculoPorPlaca = async (req, res) => {
+  try {
+    const { placa } = req.params;
+    const vehiculos = await prisma.vehiculo.findMany({
+      where: {
+        placa: placa,
+      },
+      include: {
+        conductor_vehiculo: {
+          select: {
+            placa_vehiculo: true,
+            cedula_conductor: true,
+            tipo_conductor: true,
+            usuario: {
+              select: {
+                cedula: true,
+                nombre: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const vehiculosConConductor = vehiculos.map((vehiculo) => ({
+      ...vehiculo,
+      conductores: vehiculo.conductor_vehiculo.map((conductor) => ({
+        cedula_conductor: conductor.cedula_conductor,
+        tipo_conductor: conductor.tipo_conductor,
+        usuario: conductor.usuario,
+      })),
+    }));
+
+    res.status(200).json(vehiculosConConductor);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error: "Error al obtener vehiculo" });
   }
 };
