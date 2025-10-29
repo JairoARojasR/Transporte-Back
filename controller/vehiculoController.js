@@ -66,31 +66,143 @@ export const crearVehiculo = async (req, res) => {
   }
 };
 
-export const crearVehiculoDos = async (req, res) => {
+
+export const editarVehiculoPorPlaca = async (req, res) => {
   try {
+    const { placa } = req.params;
     const {
-      placa,
       tipo_vehiculo,
       capacidad,
       odometro,
       estado,
       fecha_ultimo_mantenimiento,
+      conductores, 
     } = req.body;
-    const nuevoVehiculo = await prisma.vehiculo.create({
-      data: {
-        placa,
-        tipo_vehiculo,
-        capacidad,
-        odometro,
-        estado,
-        fecha_ultimo_mantenimiento,
+
+    // 1) Verificar que el vehículo exista
+    const existente = await prisma.vehiculo.findUnique({ where: { placa } });
+    if (!existente) {
+      return res.status(404).json({ error: "Vehículo no encontrado" });
+    }
+
+    // 2) Normalizar fecha (acepta null, "", "YYYY-MM-DD" o ISO)
+    let fechaUM = undefined; // undefined => no tocar el campo
+    if (fecha_ultimo_mantenimiento !== undefined) {
+      if (fecha_ultimo_mantenimiento === null || fecha_ultimo_mantenimiento === "") {
+        fechaUM = null;
+      } else {
+        const iso = /^\d{4}-\d{2}-\d{2}$/.test(fecha_ultimo_mantenimiento)
+          ? `${fecha_ultimo_mantenimiento}T00:00:00.000Z`
+          : fecha_ultimo_mantenimiento;
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) {
+          return res.status(400).json({ error: "fecha_ultimo_mantenimiento inválida" });
+        }
+        fechaUM = d;
+      }
+    }
+
+    // 3) Armar objeto de actualización solo con campos enviados
+    const dataUpdate = {};
+    if (tipo_vehiculo !== undefined) dataUpdate.tipo_vehiculo = tipo_vehiculo;
+    if (capacidad !== undefined) dataUpdate.capacidad = capacidad;
+    if (odometro !== undefined) dataUpdate.odometro = odometro;
+    if (estado !== undefined) dataUpdate.estado = estado;
+    if (fechaUM !== undefined) dataUpdate.fecha_ultimo_mantenimiento = fechaUM;
+
+    // 4) Si vienen conductores, validar y reemplazar
+    if (Array.isArray(conductores)) {
+      // a) Validar que no haya más de un habitual en el payload
+      const habituales = conductores.filter(c => c.tipo_conductor === "habitual");
+      if (habituales.length > 1) {
+        return res.status(400).json({ error: "Solo puede existir un conductor habitual por vehículo" });
+      }
+
+      // b) Validar que el habitual (si viene) no sea habitual en OTRO vehículo
+      if (habituales.length === 1) {
+        const cedHab = Number(habituales[0].cedula_conductor);
+        const conflicto = await prisma.conductor_vehiculo.findFirst({
+          where: {
+            cedula_conductor: cedHab,
+            tipo_conductor: "habitual",
+            placa_vehiculo: { not: placa }, // excluir el propio vehículo que estamos editando
+          },
+          select: { placa_vehiculo: true },
+        });
+        if (conflicto) {
+          return res.status(400).json({
+            error: `El conductor ${cedHab} ya es habitual del vehículo ${conflicto.placa_vehiculo}`,
+          });
+        }
+      }
+
+      // c) Transacción: actualizar vehículo + reemplazar conductores
+      const actualizado = await prisma.$transaction(async (tx) => {
+        // actualizar datos del vehículo
+        const v = await tx.vehiculo.update({
+          where: { placa },
+          data: dataUpdate,
+        });
+
+        // eliminar asignaciones actuales
+        await tx.conductor_vehiculo.deleteMany({ where: { placa_vehiculo: placa } });
+
+        // crear nuevas asignaciones (si el array viene vacío, queda sin conductores)
+        if (conductores.length > 0) {
+          await tx.conductor_vehiculo.createMany({
+            data: conductores.map(c => ({
+              placa_vehiculo: placa,
+              cedula_conductor: Number(c.cedula_conductor),
+              tipo_conductor: c.tipo_conductor,
+            })),
+          });
+        }
+
+        // devolver con relaciones
+        const completo = await tx.vehiculo.findUnique({
+          where: { placa },
+          include: {
+            conductor_vehiculo: {
+              select: {
+                placa_vehiculo: true,
+                cedula_conductor: true,
+                tipo_conductor: true,
+                usuario: { select: { cedula: true, nombre: true } },
+              },
+            },
+          },
+        });
+
+        return completo;
+      });
+
+      return res.status(200).json(actualizado);
+    }
+
+    // 5) Si NO vienen conductores, solo actualizar datos del vehículo
+    const actualizado = await prisma.vehiculo.update({
+      where: { placa },
+      data: dataUpdate,
+      include: {
+        conductor_vehiculo: {
+          select: {
+            placa_vehiculo: true,
+            cedula_conductor: true,
+            tipo_conductor: true,
+            usuario: { select: { cedula: true, nombre: true } },
+          },
+        },
       },
     });
-    res.status(201).json(nuevoVehiculo);
+
+    return res.status(200).json(actualizado);
   } catch (error) {
-    res.status(500).json({ error: "Error al crear el vehículo" });
+    console.error("Error al editar vehículo:", error);
+    return res.status(500).json({ error: "Error al editar el vehículo" });
   }
 };
+
+
 
 export const obtenerVehiculos = async (req, res) => {
   try {
@@ -162,7 +274,7 @@ export const obtenerVehiculoPorPlaca = async (req, res) => {
 
     res.status(200).json(vehiculosConConductor);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ error: "Error al obtener vehiculo" });
   }
 };
