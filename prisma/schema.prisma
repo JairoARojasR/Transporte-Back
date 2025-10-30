@@ -34,6 +34,7 @@ model inspeccion_preoperacional {
   estado_luces                        inspeccion_preoperacional_estado_luces?
   estado_frenos                       inspeccion_preoperacional_estado_frenos?
   nivel_combustible                   inspeccion_preoperacional_nivel_combustible?
+  observaciones                       String?                                      @db.Text
   vehiculo                            vehiculo?                                    @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_1")
   usuario                             usuario?                                     @relation(fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_2")
 

@@ -18,6 +18,7 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       estado_luces,
       estado_frenos,
       nivel_combustible,
+      observaciones,
     } = req.body;
 
     //verificar que la placa exista
@@ -35,7 +36,7 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       data: {
         placa_vehiculo,
         cedula_conductor,
-        fecha,
+        fecha: new Date(fecha),
         descanso_adecuando,
         consumo_alcohol,
         medicamentos_que_afecten_conduccion,
@@ -46,6 +47,7 @@ export const registroInspeccionPreoperacional = async (req, res) => {
         estado_luces,
         estado_frenos,
         nivel_combustible,
+        observaciones
       },
     });
     res.status(201).json(registro);
@@ -58,17 +60,36 @@ export const registroInspeccionPreoperacional = async (req, res) => {
 export const obtenerInspecciones = async (req, res) => {
   try {
     const inspecciones = await prisma.inspeccion_preoperacional.findMany({
-      include:{
-        usuario:{
+      include: {
+        usuario: {
           select: {
             cedula: true,
-            nombre:true
-          }
-        }
-      }
+            nombre: true,
+          },
+        },
+      },
     });
     res.status(200).json(inspecciones);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener vehiculos" });
+  }
+};
+
+export const obtenerConductoresDeUnVehiculo = async (req, res) => {
+  try {
+    const { placa } = req.params;
+    const vehiculo = await prisma.vehiculo.findMany({
+      where: {
+        placa: placa,
+      },
+      include: {
+        conductor_vehiculo: true,
+      },
+    });
+
+    res.status(200).json(vehiculo);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error al obtener conductores" });
   }
 };
