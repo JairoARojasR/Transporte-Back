@@ -47,7 +47,7 @@ export const registroInspeccionPreoperacional = async (req, res) => {
         estado_luces,
         estado_frenos,
         nivel_combustible,
-        observaciones
+        observaciones,
       },
     });
     res.status(201).json(registro);
@@ -67,11 +67,50 @@ export const obtenerInspecciones = async (req, res) => {
             nombre: true,
           },
         },
+        vehiculo: {
+          select: {
+            placa: true,
+            tipo_vehiculo: true,
+            estado: true,
+          },
+        },
       },
     });
     res.status(200).json(inspecciones);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener vehiculos" });
+  }
+};
+
+export const obtenerInspeccionPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const idInsp = Number(id);
+    const inspeccion = await prisma.inspeccion_preoperacional.findMany({
+      where: {
+        id_inspeccion: idInsp,
+      },
+      include: {
+        usuario: {
+          select: {
+            cedula: true,
+            nombre: true,
+          },
+        },
+        vehiculo: {
+          select: {
+            placa: true,
+            tipo_vehiculo: true,
+            estado: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json(inspeccion);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error al obtener inspeccion" });
   }
 };
 
