@@ -4,6 +4,7 @@ export const crearSolicitud = async (req, res) => {
   try {
     const {
       cedula_solicitante,
+      telefono,
       placa_vehiculo,
       cedula_conductor,
       fecha,
@@ -23,6 +24,7 @@ export const crearSolicitud = async (req, res) => {
     const crearSolicitud = await prisma.solicitud.create({
       data: {
         cedula_solicitante,
+        telefono,
         placa_vehiculo,
         cedula_conductor,
         fecha,

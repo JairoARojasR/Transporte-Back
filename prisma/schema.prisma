@@ -53,7 +53,7 @@ model usuario {
   nombre                                          String                      @db.VarChar(255)
   correo                                          String                      @unique(map: "correo") @db.VarChar(255)
   contrasenia                                     String                      @db.VarChar(255)
-  telefono                                        Int?
+  telefono                                        String?                     @db.VarChar(30)
   id_rol                                          Int?
   conductor_vehiculo                              conductor_vehiculo[]
   inspeccion_preoperacional                       inspeccion_preoperacional[]
@@ -93,6 +93,7 @@ model solicitud {
   observaciones                                 String?               @db.Text
   hora_inicio_transporte                        DateTime?             @db.Time(0)
   hora_fin_transporte                           DateTime?             @db.Time(0)
+  telefono                                      String?               @db.VarChar(30)
   vehiculo                                      vehiculo?             @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_1")
   usuario_solicitud_cedula_solicitanteTousuario usuario?              @relation("solicitud_cedula_solicitanteTousuario", fields: [cedula_solicitante], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_2")
   usuario_solicitud_cedula_conductorTousuario   usuario?              @relation("solicitud_cedula_conductorTousuario", fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_3")
@@ -153,16 +154,19 @@ enum solicitud_estado {
   en_reasignacion
 }
 
-enum solicitud_tipo_labor {
-  mantenimiento
-  reparacion
-  reunion
-  inspeccion_tecnica
-}
-
 enum vehiculo_tipo_vehiculo {
   carrotanque
   camion
   camioneta
   retroexcavadora
+}
+
+enum solicitud_tipo_labor {
+  mantenimiento
+  reparacion
+  reunion
+  inspeccion_tecnica
+  emergencia
+  gestion_administrativa
+  otro
 }
