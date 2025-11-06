@@ -21,14 +21,16 @@ export const crearSolicitud = async (req, res) => {
       hora_fin_transporte,
     } = req.body;
 
+    const horaFormateada = new Date(`1970-01-01T${hora}:00Z`).toISOString();
+
     const crearSolicitud = await prisma.solicitud.create({
       data: {
         cedula_solicitante,
         telefono,
-        placa_vehiculo,
-        cedula_conductor,
-        fecha,
-        hora,
+        //placa_vehiculo,
+        //cedula_conductor,
+        fecha: new Date(fecha),
+        hora: horaFormateada,
         origen,
         destino,
         estado,
@@ -37,8 +39,8 @@ export const crearSolicitud = async (req, res) => {
         cantidad_pasajeros,
         equipo_o_carga,
         observaciones,
-        hora_inicio_transporte,
-        hora_fin_transporte,
+        //hora_inicio_transporte:horaFormateada,
+        //hora_fin_transporte: horaFormateada,
       },
     });
 
@@ -104,30 +106,66 @@ export const editarSolicitud = async (req, res) => {
 export const obtenerSolicitudes = async (req, res) => {
   try {
     const solicitud = await prisma.solicitud.findMany({
-      include:{
+      include: {
         usuario_solicitud_cedula_solicitanteTousuario: {
-          select:{
+          select: {
             nombre: true,
             telefono: true,
             correo: true,
-          }
+          },
         },
         usuario_solicitud_cedula_conductorTousuario: {
           select: {
             nombre: true,
             telefono: true,
             correo: true,
-          }
+          },
         },
         vehiculo: {
           select: {
-            tipo_vehiculo: true
-          }
-        }
-      }
+            tipo_vehiculo: true,
+          },
+        },
+      },
     });
-    res.status(200).json(solicitud)
+    res.status(200).json(solicitud);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
+
+export const obtenerSolicitudPorId = async (req, res) => {
+  const { id } = req.params;
+  const id_sol = Number(id);
+  try {
+    const solicitud = await prisma.solicitud.findMany({
+      where: {
+        id_solicitud: id_sol,
+      },
+      include: {
+        usuario_solicitud_cedula_solicitanteTousuario: {
+          select: {
+            nombre: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        usuario_solicitud_cedula_conductorTousuario: {
+          select: {
+            nombre: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        vehiculo: {
+          select: {
+            tipo_vehiculo: true,
+          },
+        },
+      },
+    });
+    res.status(200).json(solicitud);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

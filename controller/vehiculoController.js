@@ -66,7 +66,6 @@ export const crearVehiculo = async (req, res) => {
   }
 };
 
-
 export const editarVehiculoPorPlaca = async (req, res) => {
   try {
     const { placa } = req.params;
@@ -76,7 +75,7 @@ export const editarVehiculoPorPlaca = async (req, res) => {
       odometro,
       estado,
       fecha_ultimo_mantenimiento,
-      conductores, 
+      conductores,
     } = req.body;
 
     // 1) Verificar que el vehículo exista
@@ -88,7 +87,10 @@ export const editarVehiculoPorPlaca = async (req, res) => {
     // 2) Normalizar fecha (acepta null, "", "YYYY-MM-DD" o ISO)
     let fechaUM = undefined; // undefined => no tocar el campo
     if (fecha_ultimo_mantenimiento !== undefined) {
-      if (fecha_ultimo_mantenimiento === null || fecha_ultimo_mantenimiento === "") {
+      if (
+        fecha_ultimo_mantenimiento === null ||
+        fecha_ultimo_mantenimiento === ""
+      ) {
         fechaUM = null;
       } else {
         const iso = /^\d{4}-\d{2}-\d{2}$/.test(fecha_ultimo_mantenimiento)
@@ -96,7 +98,9 @@ export const editarVehiculoPorPlaca = async (req, res) => {
           : fecha_ultimo_mantenimiento;
         const d = new Date(iso);
         if (isNaN(d.getTime())) {
-          return res.status(400).json({ error: "fecha_ultimo_mantenimiento inválida" });
+          return res
+            .status(400)
+            .json({ error: "fecha_ultimo_mantenimiento inválida" });
         }
         fechaUM = d;
       }
@@ -113,9 +117,15 @@ export const editarVehiculoPorPlaca = async (req, res) => {
     // 4) Si vienen conductores, validar y reemplazar
     if (Array.isArray(conductores)) {
       // a) Validar que no haya más de un habitual en el payload
-      const habituales = conductores.filter(c => c.tipo_conductor === "habitual");
+      const habituales = conductores.filter(
+        (c) => c.tipo_conductor === "habitual"
+      );
       if (habituales.length > 1) {
-        return res.status(400).json({ error: "Solo puede existir un conductor habitual por vehículo" });
+        return res
+          .status(400)
+          .json({
+            error: "Solo puede existir un conductor habitual por vehículo",
+          });
       }
 
       // b) Validar que el habitual (si viene) no sea habitual en OTRO vehículo
@@ -145,12 +155,14 @@ export const editarVehiculoPorPlaca = async (req, res) => {
         });
 
         // eliminar asignaciones actuales
-        await tx.conductor_vehiculo.deleteMany({ where: { placa_vehiculo: placa } });
+        await tx.conductor_vehiculo.deleteMany({
+          where: { placa_vehiculo: placa },
+        });
 
         // crear nuevas asignaciones (si el array viene vacío, queda sin conductores)
         if (conductores.length > 0) {
           await tx.conductor_vehiculo.createMany({
-            data: conductores.map(c => ({
+            data: conductores.map((c) => ({
               placa_vehiculo: placa,
               cedula_conductor: Number(c.cedula_conductor),
               tipo_conductor: c.tipo_conductor,
@@ -202,8 +214,6 @@ export const editarVehiculoPorPlaca = async (req, res) => {
   }
 };
 
-
-
 export const obtenerVehiculos = async (req, res) => {
   try {
     const vehiculos = await prisma.vehiculo.findMany({
@@ -234,6 +244,32 @@ export const obtenerVehiculos = async (req, res) => {
     }));
 
     res.status(200).json(vehiculosConConductor);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener vehiculos" });
+  }
+};
+
+export const obtenerVehiculoPorRegistroInspeccion = async (req, res) => {
+  try {
+    const vehiculos = await prisma.vehiculo.findMany({
+      include: {
+        inspeccion_preoperacional: {
+          select: {
+            placa_vehiculo: true,
+            cedula_conductor: true, 
+            fecha: true,
+            usuario: {
+              select: {
+                cedula: true,
+                nombre: true
+              }
+            }
+          }
+        },
+        
+      }
+    });
+    res.status(200).json(vehiculos);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener vehiculos" });
   }
