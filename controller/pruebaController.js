@@ -121,9 +121,11 @@ export const editarVehiculoPorPlaca = async (req, res) => {
         (c) => c.tipo_conductor === "habitual"
       );
       if (habituales.length > 1) {
-        return res.status(400).json({
-          error: "Solo puede existir un conductor habitual por vehículo",
-        });
+        return res
+          .status(400)
+          .json({
+            error: "Solo puede existir un conductor habitual por vehículo",
+          });
       }
 
       // b) Validar que el habitual (si viene) no sea habitual en OTRO vehículo
@@ -254,17 +256,18 @@ export const obtenerVehiculoPorRegistroInspeccion = async (req, res) => {
         inspeccion_preoperacional: {
           select: {
             placa_vehiculo: true,
-            cedula_conductor: true,
+            cedula_conductor: true, 
             fecha: true,
             usuario: {
               select: {
                 cedula: true,
-                nombre: true,
-              },
-            },
-          },
+                nombre: true
+              }
+            }
+          }
         },
-      },
+        
+      }
     });
     res.status(200).json(vehiculos);
   } catch (error) {
@@ -272,14 +275,17 @@ export const obtenerVehiculoPorRegistroInspeccion = async (req, res) => {
   }
 };
 
+// GET /api/vehiculo/obtenerInspeccion?fecha=YYYY-MM-DD
 export const obtenerVehiculosConInspeccionDeFecha = async (req, res) => {
   try {
     const fechaStr = (req.query.fecha ?? new Date().toISOString().slice(0,10)).trim();
 
+    // Como tu columna es @db.Date, comparar por rango UTC del día es robusto
     const inicio = new Date(`${fechaStr}T00:00:00.000Z`);
     const fin    = new Date(`${fechaStr}T23:59:59.999Z`);
 
     const vehiculos = await prisma.vehiculo.findMany({
+      // Filtra SOLO los que tienen inspección en ese día
       where: {
         inspeccion_preoperacional: {
           some: { fecha: { gte: inicio, lte: fin } }
@@ -322,6 +328,8 @@ export const obtenerVehiculosConInspeccionDeFecha = async (req, res) => {
     return res.status(500).json({ error: 'Error al obtener vehículos' });
   }
 };
+
+
 
 export const obtenerVehiculoPorPlaca = async (req, res) => {
   try {

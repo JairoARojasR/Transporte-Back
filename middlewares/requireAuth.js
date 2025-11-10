@@ -6,7 +6,7 @@ export const requireAuth = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload; // { sub, rol, iat, exp }
+    req.user = payload; 
     return next();
   } catch {
     return res.status(401).json({ error: "Token inválido o expirado" });

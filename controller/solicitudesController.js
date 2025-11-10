@@ -1,4 +1,6 @@
 import prisma from "../config/prisma.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
+
 
 export const crearSolicitud = async (req, res) => {
   try {
@@ -72,27 +74,28 @@ export const editarSolicitud = async (req, res) => {
       hora_fin_transporte,
     } = req.body;
 
+    const ahora = new Date();
+    const horaInicio = new Date(
+      Date.UTC(
+        1970,
+        0,
+        1,
+        ahora.getHours(),
+        ahora.getMinutes(),
+        ahora.getSeconds()
+      )
+    );
+
     const id = Number(id_solicitud);
     const editarSolicitud = await prisma.solicitud.update({
       where: {
         id_solicitud: id,
       },
       data: {
-        cedula_solicitante,
         placa_vehiculo,
         cedula_conductor,
-        fecha,
-        hora,
-        origen,
-        destino,
         estado,
-        tipo_labor,
-        prioridad,
-        cantidad_pasajeros,
-        equipo_o_carga,
-        observaciones,
-        hora_inicio_transporte,
-        hora_fin_transporte,
+        hora_inicio_transporte: horaInicio,
       },
     });
 
@@ -165,6 +168,42 @@ export const obtenerSolicitudPorId = async (req, res) => {
       },
     });
     res.status(200).json(solicitud);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const obtenerSolicitudesPorConductor = async (req, res) => {
+  try {
+    const cedulaRaw = req.user.sub;
+    const cedula = Number(cedulaRaw);
+    if (!cedula || Number.isNaN(cedula)) {
+      return res.status(401).json({ error: "Token sin cédula válida" });
+    }
+    const solicitudes = await prisma.solicitud.findMany({
+      where: { cedula_conductor: cedula },
+      orderBy: { id_solicitud: "desc" },
+    });
+
+    return res.status(200).json(solicitudes);
+  } catch (error) {
+    console.error("obtenerSolicitudesPorConductor:", error);
+    return res.status(500).json({ error: "Error al obtener solicitudes" });
+  }
+};
+
+
+
+export const obtenerSolicitudesPorConductorDos = async (req, res) => {
+  try {
+    const { cedula } = req.params;
+    const cedulaNumber = Number(cedula);
+    const solicitudes = await prisma.solicitud.findMany({
+      where: {
+        cedula_conductor: cedulaNumber,
+      },
+    });
+    res.status(200).json(solicitudes);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
