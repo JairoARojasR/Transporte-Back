@@ -1,7 +1,6 @@
 import prisma from "../config/prisma.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
-
 export const crearSolicitud = async (req, res) => {
   try {
     const {
@@ -192,9 +191,29 @@ export const obtenerSolicitudesPorConductor = async (req, res) => {
   }
 };
 
+export const obtenerSolicitudesSolicitante = async (req, res) => {
+  try {
+    const cedulaRaw = req.user.sub;
+    const cedula = Number(cedulaRaw);
+    if (!cedula || Number.isNaN(cedula)) {
+      return res.status(401).json({ error: "Token sin cédula válida" });
+    }
 
+    const solicitudes = await prisma.solicitud.findMany({
+      where: {
+        cedula_solicitante: cedula,
+      },
+      orderBy: { id_solicitud: "desc" },
+    });
 
-export const obtenerSolicitudesPorConductorDos = async (req, res) => {
+    res.status(200).json(solicitudes);
+  } catch (error) {
+    console.error("obtenerSolicitudesPorSolicitante:", error);
+    return res.status(500).json({ error: "Error al obtener solicitudes" });
+  }
+};
+
+export const obtenerSolicitudesPorConductorJson = async (req, res) => {
   try {
     const { cedula } = req.params;
     const cedulaNumber = Number(cedula);
