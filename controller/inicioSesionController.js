@@ -42,7 +42,7 @@ export const iniciarSesion = async (req, res) => {
       },
 
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES || "15m" }
+      { expiresIn: process.env.JWT_EXPIRES || "1d" }
     );
 
     res.cookie('access_token', token, {
