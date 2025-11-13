@@ -59,6 +59,7 @@ export const crearSolicitud = async (req, res) => {
   }
 };
 
+
 export const editarSolicitud = async (req, res) => {
   try {
     const { id_solicitud } = req.params;
