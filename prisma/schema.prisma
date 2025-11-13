@@ -94,6 +94,7 @@ model solicitud {
   hora_inicio_transporte                        DateTime?             @db.Time(0)
   hora_fin_transporte                           DateTime?             @db.Time(0)
   telefono                                      String?               @db.VarChar(30)
+  hora_total                                    Int?
   vehiculo                                      vehiculo?             @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_1")
   usuario_solicitud_cedula_solicitanteTousuario usuario?              @relation("solicitud_cedula_solicitanteTousuario", fields: [cedula_solicitante], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_2")
   usuario_solicitud_cedula_conductorTousuario   usuario?              @relation("solicitud_cedula_conductorTousuario", fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_3")

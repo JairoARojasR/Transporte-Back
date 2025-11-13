@@ -78,13 +78,12 @@ export const editarSolicitud = async (req, res) => {
       observaciones,
       hora_inicio_transporte,
       hora_fin_transporte,
+      hora_total
     } = req.body;
 
-    
-    const horaFormateadaInicio = new Date(`1970-01-01T${hora_inicio_transporte}:00Z`).toISOString() ;
-    const horaFormateadaFin = new Date(`1970-01-01T${hora_fin_transporte}:00Z`).toISOString() ;
-
-    console.log("Hora inicio transporte recibido:", horaFormateadaInicio);
+    console.log("Datos recibidos para editar la solicitud:", req.body);
+    console.log("hora_inicio_transporte:", hora_inicio_transporte);
+    console.log("hora_fin_transporte:", hora_fin_transporte);
 
     const id = Number(id_solicitud);
     const editarSolicitud = await prisma.solicitud.update({
@@ -97,10 +96,14 @@ export const editarSolicitud = async (req, res) => {
         estado,
         hora_inicio_transporte,
         hora_fin_transporte,
+        hora_total
       },
     });
 
     res.status(201).json(editarSolicitud);
+    console.log("Datos recibidos para editar la solicitud:", req.body);
+    console.log("hora_inicio_transporte:", hora_inicio_transporte);
+    console.log("hora_fin_transporte:", hora_fin_transporte);
   } catch (error) {
     console.error("Error al editar la solicitud:", error);
     res.status(500).json({ error: "Error al editar la solicitud" });
