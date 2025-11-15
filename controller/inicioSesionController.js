@@ -70,9 +70,10 @@ export const iniciarSesion = async (req, res) => {
 
 export const cerrarSesion = (req, res) => {
   res.clearCookie('access_token', {
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'none',
+    path: '/',
     maxAge: 0,
   });
   return res.status(200).json({ mensaje: "Sesión cerrada exitosamente." });
