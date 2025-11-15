@@ -13,12 +13,21 @@ import inicioSesionRoutes from './routes/inicioSesionRoutes.js'
 dotenv.config();
 
 const app = express();
-app.use( 
-  cors({
-    origin: "http://localhost:3000", 
-    credentials: true, 
-  })
-);
+
+const allowedOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:3000";
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
+// app.use( 
+//   cors({
+//     origin: "http://localhost:3000 ", 
+//     credentials: true, 
+//   })
+// );
 app.use(express.json()); 
 app.use(cookieParser());
 
