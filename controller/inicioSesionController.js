@@ -4,20 +4,17 @@ import jwt from "jsonwebtoken";
 
 export const iniciarSesion = async (req, res) => {
   try {
-    const { correo, contrasenia } = req.body;
-    console.log("Datos recibidos", correo, contrasenia);
-
-    //validar campos
-    if (!correo || !contrasenia) {
+    const { cedula, contrasenia } = req.body;
+    console.log("Datos recibidos", cedula, contrasenia);
+    if (!cedula || !contrasenia) {
       return res
         .status(400)
-        .json({ error: "El correo y la contraseña son obligatorias." });
+        .json({ error: "la cédula y la contraseña son obligatorias." });
     }
 
-    //validar que el usuario exista
     const usuario = await prisma.usuario.findUnique({
       where: {
-        correo,
+        cedula,
       },
     });
 
@@ -28,13 +25,11 @@ export const iniciarSesion = async (req, res) => {
       });
     }
 
-    //comparar contraseñas
     const ok = await bcrypt.compare(contrasenia, usuario.contrasenia);
     if (!ok) {
       return res.status(401).json({ error: "Credenciales inválidas." });
     }
 
-    //generar token
     const token = jwt.sign(
       {
         sub: usuario.cedula,
@@ -50,6 +45,7 @@ export const iniciarSesion = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
       maxAge: 8 * 60 * 60 * 1000, // 8 horas
+      path: '/',
     })
 
     //enviar respuesta
@@ -72,6 +68,7 @@ export const cerrarSesion = (req, res) => {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none',
+    path: '/',
     maxAge: 0,
   });
   return res.status(200).json({ mensaje: "Sesión cerrada exitosamente." });
