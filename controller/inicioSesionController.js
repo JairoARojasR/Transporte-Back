@@ -4,17 +4,17 @@ import jwt from "jsonwebtoken";
 
 export const iniciarSesion = async (req, res) => {
   try {
-    const { correo, contrasenia } = req.body;
-    console.log("Datos recibidos", correo, contrasenia);
-    if (!correo || !contrasenia) {
+    const { cedula, contrasenia } = req.body;
+    console.log("Datos recibidos", cedula, contrasenia);
+    if (!cedula || !contrasenia) {
       return res
         .status(400)
-        .json({ error: "el correo y la contraseña son obligatorias." });
+        .json({ error: "la cédula y la contraseña son obligatorias." });
     }
 
     const usuario = await prisma.usuario.findUnique({
       where: {
-        correo,
+        cedula,
       },
     });
 
@@ -41,7 +41,7 @@ export const iniciarSesion = async (req, res) => {
     );
 
     res.cookie('access_token', token, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'none',
       maxAge: 8 * 60 * 60 * 1000, // 8 horas
@@ -65,7 +65,7 @@ export const iniciarSesion = async (req, res) => {
 
 export const cerrarSesion = (req, res) => {
   res.clearCookie('access_token', {
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'none',
     path: '/',
