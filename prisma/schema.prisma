@@ -12,8 +12,8 @@ model conductor_vehiculo {
   placa_vehiculo   String                             @db.VarChar(30)
   cedula_conductor Int
   tipo_conductor   conductor_vehiculo_tipo_conductor?
-  vehiculo         vehiculo                           @relation(fields: [placa_vehiculo], references: [placa], onDelete: NoAction, onUpdate: NoAction, map: "conductor_vehiculo_ibfk_1")
-  usuario          usuario                            @relation(fields: [cedula_conductor], references: [cedula], onDelete: NoAction, onUpdate: NoAction, map: "conductor_vehiculo_ibfk_2")
+  vehiculo         vehiculo                           @relation(fields: [placa_vehiculo], references: [placa], onUpdate: Restrict, map: "conductor_vehiculo_ibfk_1")
+  usuario          usuario                            @relation(fields: [cedula_conductor], references: [cedula], onUpdate: Restrict, map: "conductor_vehiculo_ibfk_2")
 
   @@id([placa_vehiculo, cedula_conductor])
   @@index([cedula_conductor], map: "cedula_conductor")
@@ -35,8 +35,8 @@ model inspeccion_preoperacional {
   estado_frenos                       inspeccion_preoperacional_estado_frenos?
   nivel_combustible                   inspeccion_preoperacional_nivel_combustible?
   observaciones                       String?                                      @db.Text
-  vehiculo                            vehiculo?                                    @relation(fields: [placa_vehiculo], references: [placa], onDelete: NoAction, onUpdate: NoAction, map: "inspeccion_preoperacional_ibfk_1")
-  usuario                             usuario?                                     @relation(fields: [cedula_conductor], references: [cedula], onDelete: NoAction, onUpdate: NoAction, map: "inspeccion_preoperacional_ibfk_2")
+  vehiculo                            vehiculo?                                    @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_1")
+  usuario                             usuario?                                     @relation(fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "inspeccion_preoperacional_ibfk_2")
 
   @@index([cedula_conductor], map: "cedula_conductor")
   @@index([placa_vehiculo], map: "placa_vehiculo")
@@ -59,7 +59,7 @@ model usuario {
   inspeccion_preoperacional                       inspeccion_preoperacional[]
   solicitud_solicitud_cedula_solicitanteTousuario solicitud[]                 @relation("solicitud_cedula_solicitanteTousuario")
   solicitud_solicitud_cedula_conductorTousuario   solicitud[]                 @relation("solicitud_cedula_conductorTousuario")
-  rol                                             rol?                        @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "usuario_ibfk_1")
+  rol                                             rol?                        @relation(fields: [id_rol], references: [id_rol], onDelete: Restrict, onUpdate: Restrict, map: "usuario_ibfk_1")
 
   @@index([id_rol], map: "id_rol")
 }
@@ -77,27 +77,31 @@ model vehiculo {
 }
 
 model solicitud {
-  id_solicitud                                  Int                   @id @default(autoincrement())
+  id_solicitud                                  Int                       @id @default(autoincrement())
   cedula_solicitante                            Int?
-  placa_vehiculo                                String?               @db.VarChar(30)
+  placa_vehiculo                                String?                   @db.VarChar(30)
   cedula_conductor                              Int?
-  fecha                                         DateTime?             @db.Date
-  hora                                          DateTime?             @db.Time(0)
-  origen                                        String?               @db.VarChar(250)
-  destino                                       String?               @db.VarChar(250)
-  estado                                        solicitud_estado      @default(pendiente)
+  fecha                                         DateTime?                 @db.Date
+  hora                                          DateTime?                 @db.Time(0)
+  origen                                        String?                   @db.VarChar(250)
+  destino                                       String?                   @db.VarChar(250)
+  estado                                        solicitud_estado          @default(pendiente)
   tipo_labor                                    solicitud_tipo_labor?
   prioridad                                     solicitud_prioridad?
   cantidad_pasajeros                            Int?
-  equipo_o_carga                                String?               @db.VarChar(250)
-  observaciones                                 String?               @db.Text
-  hora_inicio_transporte                        DateTime?             @db.Time(0)
-  hora_fin_transporte                           DateTime?             @db.Time(0)
-  telefono                                      String?               @db.VarChar(30)
+  equipo_o_carga                                String?                   @db.VarChar(250)
+  observaciones                                 String?                   @db.Text
+  hora_inicio_transporte                        DateTime?                 @db.Time(0)
+  hora_fin_transporte                           DateTime?                 @db.Time(0)
+  telefono                                      String?                   @db.VarChar(30)
   hora_total                                    Int?
-  vehiculo                                      vehiculo?             @relation(fields: [placa_vehiculo], references: [placa], onDelete: NoAction, onUpdate: NoAction, map: "solicitud_ibfk_1")
-  usuario_solicitud_cedula_solicitanteTousuario usuario?              @relation("solicitud_cedula_solicitanteTousuario", fields: [cedula_solicitante], references: [cedula], onDelete: NoAction, onUpdate: NoAction, map: "solicitud_ibfk_2")
-  usuario_solicitud_cedula_conductorTousuario   usuario?              @relation("solicitud_cedula_conductorTousuario", fields: [cedula_conductor], references: [cedula], onDelete: NoAction, onUpdate: NoAction, map: "solicitud_ibfk_3")
+  tipo_incidente                                solicitud_tipo_incidente?
+  gravedad                                      solicitud_gravedad?
+  descripcion_incidente                         String?                   @db.Text
+  puedecontinuar                                Boolean?
+  vehiculo                                      vehiculo?                 @relation(fields: [placa_vehiculo], references: [placa], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_1")
+  usuario_solicitud_cedula_solicitanteTousuario usuario?                  @relation("solicitud_cedula_solicitanteTousuario", fields: [cedula_solicitante], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_2")
+  usuario_solicitud_cedula_conductorTousuario   usuario?                  @relation("solicitud_cedula_conductorTousuario", fields: [cedula_conductor], references: [cedula], onDelete: Restrict, onUpdate: Restrict, map: "solicitud_ibfk_3")
 
   @@index([cedula_conductor], map: "cedula_conductor")
   @@index([cedula_solicitante], map: "cedula_solicitante")
@@ -170,4 +174,17 @@ enum solicitud_tipo_labor {
   emergencia
   gestion_administrativa
   otro
+}
+
+enum solicitud_tipo_incidente {
+  accidente
+  falla_mecanica
+  retraso
+  otro
+}
+
+enum solicitud_gravedad {
+  baja
+  media
+  alta
 }

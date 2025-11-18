@@ -80,7 +80,11 @@ export const editarSolicitud = async (req, res) => {
       observaciones,
       hora_inicio_transporte,
       hora_fin_transporte,
-      hora_total
+      hora_total,
+      tipo_incidente,
+      gravedad,
+      descripcion_incidente,
+      puedecontinuar
     } = req.body;
 
     console.log("Datos recibidos para editar la solicitud:", req.body);
@@ -98,7 +102,11 @@ export const editarSolicitud = async (req, res) => {
         estado,
         hora_inicio_transporte,
         hora_fin_transporte,
-        hora_total
+        hora_total,
+        tipo_incidente,
+        gravedad,
+        descripcion_incidente,
+        puedecontinuar
       },
     });
 
@@ -219,6 +227,49 @@ export const obtenerSolicitudesPorConductor = async (req, res) => {
   }
 };
 
+export const obtenerSolicitudesSolicitante = async (req, res) => {
+  try {
+    const cedulaRaw = req.user.sub;
+    const cedula = Number(cedulaRaw);
+    if (!cedula || Number.isNaN(cedula)) {
+      return res.status(401).json({ error: "Token sin cédula válida" });
+    }
+
+    const solicitudes = await prisma.solicitud.findMany({
+      where: {
+        cedula_solicitante: cedula,
+      },
+      orderBy: { id_solicitud: "desc" },
+      include: {
+        usuario_solicitud_cedula_solicitanteTousuario: {
+          select: {
+            nombre: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        usuario_solicitud_cedula_conductorTousuario: {
+          select: {
+            nombre: true,
+            telefono: true,
+            correo: true,
+          },
+        },
+        vehiculo: {
+          select: {
+            tipo_vehiculo: true,
+          },
+        },
+      },
+    });
+
+    res.status(200).json(solicitudes);
+  } catch (error) {
+    console.error("obtenerSolicitudesPorSolicitante:", error);
+    return res.status(500).json({ error: "Error al obtener solicitudes" });
+  }
+};
+
 export const obtenerSolicitudesPorConductorJson = async (req, res) => {
   try {
     const { cedula } = req.params;
@@ -234,24 +285,20 @@ export const obtenerSolicitudesPorConductorJson = async (req, res) => {
   }
 };
 
-export const obtenerSolicitudesSolicitante = async (req, res) => {
-  try {
-    const cedulaRaw = req.user.sub;
-    const cedula = Number(cedulaRaw);
-    if (!cedula || Number.isNaN(cedula)) {
-      return res.status(401).json({ error: "Token sin cédula válida" });
-    }
 
+
+export const obtenerSolicitudesPorSolicitanteJson = async (req, res) => {
+  try {
+    const { cedula } = req.params;
+    const cedulaNumber = Number(cedula);
     const solicitudes = await prisma.solicitud.findMany({
       where: {
-        cedula_solicitante: cedula,
+        cedula_solicitante: cedulaNumber,
       },
-      orderBy: { id_solicitud: "desc" },
     });
-
     res.status(200).json(solicitudes);
   } catch (error) {
-    console.error("obtenerSolicitudesPorSolicitante:", error);
-    return res.status(500).json({ error: "Error al obtener solicitudes" });
+    console.log(error)
+    res.status(500).json({ error: error.message });
   }
 };
