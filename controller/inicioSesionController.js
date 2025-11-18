@@ -41,9 +41,9 @@ export const iniciarSesion = async (req, res) => {
     );
 
     res.cookie('access_token', token, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'none',
       maxAge: 8 * 60 * 60 * 1000, // 8 horas
       path: '/',
     })
@@ -65,9 +65,9 @@ export const iniciarSesion = async (req, res) => {
 
 export const cerrarSesion = (req, res) => {
   res.clearCookie('access_token', {
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'none',
     path: '/',
     maxAge: 0,
   });
