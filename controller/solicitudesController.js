@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
+import { requireRole } from "../middlewares/requireRole.js";
 
 export const crearSolicitud = async (req, res) => {
   try {
