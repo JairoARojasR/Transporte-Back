@@ -4,17 +4,17 @@ import jwt from "jsonwebtoken";
 
 export const iniciarSesion = async (req, res) => {
   try {
-    const { cedula, contrasenia } = req.body;
-    console.log("Datos recibidos", cedula, contrasenia);
-    if (!cedula || !contrasenia) {
+    const { correo, contrasenia } = req.body;
+    console.log("Datos recibidos", correo, contrasenia);
+    if (!correo || !contrasenia) {
       return res
         .status(400)
-        .json({ error: "la cédula y la contraseña son obligatorias." });
+        .json({ error: "el correo y la contraseña son obligatorias." });
     }
 
     const usuario = await prisma.usuario.findUnique({
       where: {
-        cedula,
+        correo,
       },
     });
 
