@@ -84,7 +84,7 @@ export const editarSolicitud = async (req, res) => {
       tipo_incidente,
       gravedad,
       descripcion_incidente,
-      puedecontinuar
+      puede_continuar
     } = req.body;
 
     console.log("Datos recibidos para editar la solicitud:", req.body);
@@ -106,7 +106,7 @@ export const editarSolicitud = async (req, res) => {
         tipo_incidente,
         gravedad,
         descripcion_incidente,
-        puedecontinuar
+        puede_continuar
       },
     });
 
@@ -183,6 +183,7 @@ export const obtenerSolicitudPorId = async (req, res) => {
     });
     res.status(200).json(solicitud);
   } catch (error) {
+    console.log("info", error)
     res.status(500).json({ error: error.message });
   }
 };
