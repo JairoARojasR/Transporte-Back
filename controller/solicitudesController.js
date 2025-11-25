@@ -61,7 +61,129 @@ export const crearSolicitud = async (req, res) => {
 };
 
 
+// export const editarSolicitud = async (req, res) => {
+//   try {
+//     const { id_solicitud } = req.params;
+//     const {
+//       cedula_solicitante,
+//       placa_vehiculo,
+//       cedula_conductor,
+//       fecha,
+//       hora,
+//       origen,
+//       destino,
+//       estado,
+//       tipo_labor,
+//       prioridad,
+//       cantidad_pasajeros,
+//       equipo_o_carga,
+//       observaciones,
+//       hora_inicio_transporte,
+//       hora_fin_transporte,
+//       hora_total,
+//       tipo_incidente,
+//       gravedad,
+//       descripcion_incidente,
+//       puede_continuar
+//     } = req.body;
+
+//     console.log("Datos recibidos para editar la solicitud:", req.body);
+//     console.log("hora_inicio_transporte:", hora_inicio_transporte);
+//     console.log("hora_fin_transporte:", hora_fin_transporte);
+
+//     const id = Number(id_solicitud);
+//     const editarSolicitud = await prisma.solicitud.update({
+//       where: {
+//         id_solicitud: id,
+//       },
+//       data: {
+//         placa_vehiculo,
+//         cedula_conductor,
+//         estado,
+//         hora_inicio_transporte,
+//         hora_fin_transporte,
+//         hora_total,
+//         tipo_incidente,
+//         gravedad,
+//         descripcion_incidente,
+//         puede_continuar
+//       },
+//     });
+
+//     res.status(201).json(editarSolicitud);
+//     console.log("Datos recibidos para editar la solicitud:", req.body);
+//     console.log("hora_inicio_transporte:", hora_inicio_transporte);
+//     console.log("hora_fin_transporte:", hora_fin_transporte);
+//   } catch (error) {
+//     console.error("Error al editar la solicitud:", error);
+//     res.status(500).json({ error: "Error al editar la solicitud" });
+//   }
+// };
+
+
 export const editarSolicitud = async (req, res) => {
+  try {
+    const { id_solicitud } = req.params;
+    const {
+      placa_vehiculo,
+      cedula_conductor,
+      estado,
+      hora_inicio_transporte,
+      hora_fin_transporte,
+      hora_total,
+      tipo_incidente,
+      gravedad,
+      descripcion_incidente,
+      puede_continuar,
+    } = req.body;
+
+    const id = Number(id_solicitud);
+
+    // 1. Actualizar la solicitud
+    const solicitudActualizada = await prisma.solicitud.update({
+      where: { id_solicitud: id },
+      data: {
+        placa_vehiculo,
+        cedula_conductor,
+        estado,
+        hora_inicio_transporte,
+        hora_fin_transporte,
+        hora_total,
+        tipo_incidente,
+        gravedad,
+        descripcion_incidente,
+        puede_continuar,
+      },
+    });
+
+    // 2. REGLAS DE ESTADO DEL VEHÍCULO
+    if (solicitudActualizada.placa_vehiculo) {
+      let nuevoEstadoVehiculo = null;
+
+      if (estado === "asignada" || estado === "aceptada") {
+        nuevoEstadoVehiculo = "asignado";
+      }
+
+      if (estado === "pendiente" || estado === "finalizada") {
+        nuevoEstadoVehiculo = "disponible";
+      }
+
+      if (nuevoEstadoVehiculo) {
+        await prisma.vehiculo.update({
+          where: { placa: solicitudActualizada.placa_vehiculo },
+          data: { estado: nuevoEstadoVehiculo },
+        });
+      }
+    }
+
+    res.status(200).json(solicitudActualizada);
+  } catch (error) {
+    console.error("Error al editar la solicitud:", error);
+    res.status(500).json({ error: "Error al editar la solicitud" });
+  }
+};
+
+export const editarSolicitud2 = async (req, res) => {
   try {
     const { id_solicitud } = req.params;
     const {
@@ -84,18 +206,16 @@ export const editarSolicitud = async (req, res) => {
       tipo_incidente,
       gravedad,
       descripcion_incidente,
-      puede_continuar
+      puede_continuar,
     } = req.body;
 
     console.log("Datos recibidos para editar la solicitud:", req.body);
-    console.log("hora_inicio_transporte:", hora_inicio_transporte);
-    console.log("hora_fin_transporte:", hora_fin_transporte);
 
     const id = Number(id_solicitud);
-    const editarSolicitud = await prisma.solicitud.update({
-      where: {
-        id_solicitud: id,
-      },
+
+    // 1. Actualizar la solicitud
+    const solicitudActualizada = await prisma.solicitud.update({
+      where: { id_solicitud: id },
       data: {
         placa_vehiculo,
         cedula_conductor,
@@ -106,19 +226,53 @@ export const editarSolicitud = async (req, res) => {
         tipo_incidente,
         gravedad,
         descripcion_incidente,
-        puede_continuar
+        puede_continuar,
+      },
+      include: {
+        vehiculo: true, 
       },
     });
 
-    res.status(201).json(editarSolicitud);
-    console.log("Datos recibidos para editar la solicitud:", req.body);
-    console.log("hora_inicio_transporte:", hora_inicio_transporte);
-    console.log("hora_fin_transporte:", hora_fin_transporte);
+    if(solicitudActualizada.placa_vehiculo){
+      let nuevoEstadoVehiculo = null;
+
+      if(estado === "aceptada" || estado === "asignada"){
+        nuevoEstadoVehiculo = "asignado"
+      }
+
+      if(estado === "pendiente" || estado === "finalizada"){
+        nuevoEstadoVehiculo = "disponible"
+      }  
+      
+      if(nuevoEstadoVehiculo){
+        await prisma.vehiculo.update({
+          where:{
+            placa: solicitudActualizada.placa_vehiculo
+          },
+          data:{
+            estado: nuevoEstadoVehiculo
+          }
+        })
+      }
+    }
+
+
+    // if (estado === "aceptada" && estado === "asignada" && solicitudActualizada.placa_vehiculo) {
+    //   await prisma.vehiculo.update({
+    //     where: { placa: solicitudActualizada.placa_vehiculo },
+    //     data: {
+    //       estado: "asignado", 
+    //     },
+    //   });
+    // }
+
+    res.status(200).json(solicitudActualizada);
   } catch (error) {
     console.error("Error al editar la solicitud:", error);
     res.status(500).json({ error: "Error al editar la solicitud" });
   }
 };
+
 
 export const obtenerSolicitudes = async (req, res) => {
   try {
@@ -141,9 +295,11 @@ export const obtenerSolicitudes = async (req, res) => {
         vehiculo: {
           select: {
             tipo_vehiculo: true,
+            estado: true
           },
         },
       },
+      orderBy: {id_solicitud: "desc"}
     });
     res.status(200).json(solicitud);
   } catch (error) {
@@ -301,5 +457,26 @@ export const obtenerSolicitudesPorSolicitanteJson = async (req, res) => {
   } catch (error) {
     console.log(error)
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const actualizarEstadoVehiculo = async (req, res) => {
+  try {
+    const { placa, estado } = req.body;  // Recibe placa y nuevo estado
+
+    if (!placa || !estado) {
+      return res.status(400).json({ error: "Placa y estado son obligatorios" });
+    }
+
+    // Actualizar el estado del vehículo con la placa recibida
+    const vehiculoActualizado = await prisma.vehiculo.update({
+      where: { placa },
+      data: { estado },  // Actualiza el estado del vehículo
+    });
+
+    res.status(200).json(vehiculoActualizado); // Respuesta de éxito con el vehículo actualizado
+  } catch (error) {
+    console.error("Error al actualizar el estado del vehículo:", error);
+    res.status(500).json({ error: "Error al actualizar el estado del vehículo" });
   }
 };

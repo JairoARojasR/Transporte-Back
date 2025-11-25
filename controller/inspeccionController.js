@@ -21,17 +21,16 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       observaciones,
     } = req.body;
 
-    //verificar que la placa exista
+    // 1. validar que la placa exista
     const validarPlaca = await prisma.vehiculo.findUnique({
-      where: {
-        placa: placa_vehiculo,
-      },
+      where: { placa: placa_vehiculo },
     });
 
     if (!validarPlaca) {
       return res.status(404).json({ error: "Vehículo no encontrado" });
     }
 
+    // 2. Crear la inspección
     const registro = await prisma.inspeccion_preoperacional.create({
       data: {
         placa_vehiculo,
@@ -50,12 +49,40 @@ export const registroInspeccionPreoperacional = async (req, res) => {
         observaciones,
       },
     });
-    res.status(201).json(registro);
+
+    const hayProblemasGraves =
+      descanso_adecuando === false ||
+      consumo_alcohol === true ||
+      medicamentos_que_afecten_conduccion === true ||
+      condiciones_fisicas_mentales === false ||
+      soat_vigente === false ||
+      tecnico_mecanica === false ||
+      estado_llantas === "malo" ||
+      estado_luces === "malo" ||
+      estado_frenos === "malo" ||
+      nivel_combustible === "bajo";
+
+    const nuevoEstado = hayProblemasGraves ? "no_disponible" : "disponible";
+
+    await prisma.vehiculo.update({
+      where: { placa: placa_vehiculo },
+      data: {
+        estado: nuevoEstado,
+      },
+    });
+
+    return res.status(201).json({
+      mensaje: "Inspección registrada correctamente",
+      inspeccion: registro,
+      estado_vehiculo_actualizado: nuevoEstado,
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Error al crear la inspección" });
+    return res.status(500).json({ error: "Error al crear la inspección" });
   }
 };
+
 
 export const obtenerInspecciones = async (req, res) => {
   try {
@@ -75,6 +102,7 @@ export const obtenerInspecciones = async (req, res) => {
           },
         },
       },
+      orderBy: {id_inspeccion: "desc"}
     });
     res.status(200).json(inspecciones);
   } catch (error) {

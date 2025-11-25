@@ -75,8 +75,8 @@ export const obtenerConductores = async (req, res) => {
       select: {
         cedula: true,
         nombre: true,
-        id_rol: true
-      }
+        id_rol: true,
+      },
     });
     res.status(200).json(conductores);
   } catch (error) {
@@ -84,3 +84,56 @@ export const obtenerConductores = async (req, res) => {
     res.status(500).json({ error: "Error al obtener conductores" });
   }
 };
+
+export const sincronizarUsuarios = async (req, res) => {
+  try {
+    const empleados = await prisma.$queryRaw`
+      SELECT cedula, nombre, correo, telefono
+      FROM prueba.usuario
+    `;
+
+    const creados = [];
+    const omitidos = [];
+
+    for (const emp of empleados) {
+      const existente = await prisma.usuario.findUnique({
+        where: { cedula: emp.cedula },
+      });
+
+      if (existente) {
+        omitidos.push(emp);
+        console.log(` Usuario ya existe, omitido: ${emp.cedula}`);
+        continue;
+      }
+      const nombreSinEspacios = emp.nombre.replace(/\s+/g, "");
+      const contraseniaPlana = `${emp.cedula}_${nombreSinEspacios}`;
+      const contraseniaHash = await bcrypt.hash(contraseniaPlana, 10);
+
+  
+      await prisma.usuario.create({
+        data: {
+          cedula: emp.cedula,
+          nombre: emp.nombre,
+          correo: emp.correo,
+          telefono: emp.telefono,
+          contrasenia: contraseniaHash,
+          id_rol: 2,
+        },
+      });
+
+      creados.push(emp);
+      console.log(`Usuario creado: ${emp.cedula}`);
+    }
+
+    res.json({
+      mensaje: "Sincronización completada",
+      usuarios_creados: creados,
+      usuarios_omitidos: omitidos,
+    });
+
+  } catch (error) {
+    console.error("Error sincronizando empleados:", error);
+    res.status(500).json({ error: "Error sincronizando empleados" });
+  }
+};
+
