@@ -89,7 +89,7 @@ export const sincronizarUsuarios = async (req, res) => {
   try {
     const empleados = await prisma.$queryRaw`
       SELECT cedula, nombre, correo, telefono
-      FROM prueba.usuario
+      FROM vehiculo.usuario
     `;
 
     const creados = [];
@@ -105,8 +105,10 @@ export const sincronizarUsuarios = async (req, res) => {
         console.log(` Usuario ya existe, omitido: ${emp.cedula}`);
         continue;
       }
-      const nombreSinEspacios = emp.nombre.replace(/\s+/g, "");
-      const contraseniaPlana = `${emp.cedula}_${nombreSinEspacios}`;
+      // const nombreSinEspacios = emp.nombre.replace(/\s+/g, "");
+      // const contraseniaPlana = `${emp.cedula}_${nombreSinEspacios}`;
+      const primerNombre = emp.nombre.split(" ")[0]; 
+      const contraseniaPlana = `${emp.cedula}${primerNombre.toLowerCase()}`
       const contraseniaHash = await bcrypt.hash(contraseniaPlana, 10);
 
   
