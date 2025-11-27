@@ -335,12 +335,10 @@ export const exportarSolicitudesExcel = async (req, res) => {
         .json({ error: "fechaInicio es requerida en el query param" });
     }
 
-    // Construir rango de fechas
     const fechaInicioDate = new Date(fechaInicio);
     const fechaFinDate = fechaFin ? new Date(fechaFin) : new Date(fechaInicio);
 
-    // Opcional: asegurar que fechaFin tenga al menos el mismo día
-    // (como la columna es DATE, basta con gte/lte)
+
     const solicitudes = await prisma.solicitud.findMany({
       where: {
         fecha: {
@@ -370,7 +368,6 @@ export const exportarSolicitudesExcel = async (req, res) => {
       },
     });
 
-    // Mapear datos a filas para el Excel
     const filas = solicitudes.map((s) => ({
       Fecha: s.fecha ? formatearFecha(s.fecha) : "N/A",
       Origen: s.origen || "",
@@ -394,13 +391,12 @@ export const exportarSolicitudesExcel = async (req, res) => {
         : "N/A"
     }));
 
-    // Crear workbook y hoja
+    
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(filas);
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Solicitudes");
 
-    // Generar buffer del Excel
     const buffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "buffer",
@@ -410,7 +406,7 @@ export const exportarSolicitudesExcel = async (req, res) => {
       ? `solicitudes_${fechaInicio}_a_${fechaFin}.xlsx`
       : `solicitudes_${fechaInicio}.xlsx`;
 
-    // Headers para descarga
+    
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${nombreArchivo}"`

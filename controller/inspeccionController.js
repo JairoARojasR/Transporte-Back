@@ -76,13 +76,66 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       inspeccion: registro,
       estado_vehiculo_actualizado: nuevoEstado,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Error al crear la inspección" });
   }
 };
 
+export const ActualizarEstadoInspeccion = async (req, res) => {
+  try {
+    const { id_inspeccion } = req.params;
+    const idNumber = Number(id_inspeccion);
+
+    const inspeccion = await prisma.inspeccion_preoperacional.findUnique({
+      where: {
+        id_inspeccion: idNumber,
+      },
+    });
+
+    if (!inspeccion) {
+      return res.status(400).json({ error: "Inspeccion no encontrada" });
+    }
+
+    const actualizarInspeccion = await prisma.inspeccion_preoperacional.update({
+      where: {
+        id_inspeccion: idNumber,
+      },
+      data: {
+        descanso_adecuando: true,
+        consumo_alcohol: false,
+        medicamentos_que_afecten_conduccion: false,
+        condiciones_fisicas_mentales: true,
+        soat_vigente: true,
+        tecnico_mecanica: true,
+        estado_llantas: "bueno",
+        estado_luces: "bueno",
+        estado_frenos: "bueno",
+        nivel_combustible: "medio",
+        observaciones: "Sin problemas",
+      },
+    });
+
+    const actualizarVehiculo = await prisma.vehiculo.update({
+      where: {
+        placa: inspeccion.placa_vehiculo,
+      },
+      data: {
+        estado: "disponible",
+      },
+    });
+
+   return res.status(200).json({
+      mensaje: "Estado de la inspección y vehículo actualizados correctamente",
+      inspeccion: actualizarInspeccion,
+      estado_vehiculo: actualizarVehiculo.estado,
+    });
+  } catch (error) {
+    console.error(error)
+    console.error("Error al actualizar estado de inspección:", error);
+    return res.status(500).json({ error: "Error al actualizar estado de inspección" });
+  }
+};
 
 export const obtenerInspecciones = async (req, res) => {
   try {
@@ -102,7 +155,7 @@ export const obtenerInspecciones = async (req, res) => {
           },
         },
       },
-      orderBy: {id_inspeccion: "desc"}
+      orderBy: { id_inspeccion: "desc" },
     });
     res.status(200).json(inspecciones);
   } catch (error) {
