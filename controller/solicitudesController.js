@@ -379,7 +379,7 @@ export const exportarSolicitudesExcel = async (req, res) => {
         s.usuario_solicitud_cedula_solicitanteTousuario?.nombre || "",
       Equipo_o_carga: s.equipo_o_carga || "",
       Tipo_labor: s.tipo_labor || "",
-      Vehiculo_asignado: s.vehiculo.placa || "",
+      Vehiculo_asignado: s.vehiculo && s.vehiculo.placa ? s.vehiculo.placa : "N/A",
       Conductor_asignado:
         s.usuario_solicitud_cedula_conductorTousuario.nombre || "",
       Observaciones: s.observaciones || "",
