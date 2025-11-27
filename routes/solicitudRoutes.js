@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma from "../config/prisma.js";
 
-import {crearSolicitud, editarSolicitud, actualizarEstadoVehiculo, obtenerSolicitudes , obtenerSolicitudPorId, obtenerSolicitudesPorConductor, obtenerSolicitudesSolicitante, obtenerSolicitudesPorConductorJson, obtenerSolicitudesPorSolicitanteJson} from '../controller/solicitudesController.js';
+import {crearSolicitud, editarSolicitud, actualizarEstadoVehiculo, obtenerSolicitudes , obtenerSolicitudPorId, obtenerSolicitudesPorConductor, obtenerSolicitudesSolicitante, obtenerSolicitudesPorConductorJson, obtenerSolicitudesPorSolicitanteJson, exportarSolicitudesExcel} from '../controller/solicitudesController.js';
 import { requireAuth } from '../middlewares/requireAuth.js';
 import { requireRole } from "../middlewares/requireRole.js";
 
@@ -15,4 +15,5 @@ router.get('/misSolicitudes', requireAuth, requireRole([8]), obtenerSolicitudesP
 router.get('/misSolicitudesSolicitante', requireAuth, obtenerSolicitudesSolicitante)
 router.get('/misSolicitudesSolicitanteJson/:cedula', obtenerSolicitudesPorSolicitanteJson)
 router.put('/actualizarEstadoVehiculo/:placa', actualizarEstadoVehiculo);
+router.get("/exportar", exportarSolicitudesExcel);
 export default router;

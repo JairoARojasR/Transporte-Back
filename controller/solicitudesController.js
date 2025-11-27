@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
-import { requireRole } from "../middlewares/requireRole.js";
+import * as XLSX from "xlsx";
+import { formatearFecha, formatearHora, formatearDuracion } from "../utils/formatearFecha.js";
 
 export const crearSolicitud = async (req, res) => {
   try {
@@ -24,8 +24,7 @@ export const crearSolicitud = async (req, res) => {
     } = req.body;
 
     const horaFormateada = new Date(`1970-01-01T${hora}:00Z`).toISOString();
-        console.log("Hora inicio transporte recibido:", horaFormateada);
-
+    console.log("Hora inicio transporte recibido:", horaFormateada);
 
     const crearSolicitud = await prisma.solicitud.create({
       data: {
@@ -48,10 +47,7 @@ export const crearSolicitud = async (req, res) => {
       },
     });
 
-        console.log("Hora inicio transporte recibido:", horaFormateada);
-
-
-
+    console.log("Hora inicio transporte recibido:", horaFormateada);
 
     res.status(201).json(crearSolicitud);
   } catch (error) {
@@ -59,67 +55,6 @@ export const crearSolicitud = async (req, res) => {
     res.status(500).json({ error: "Error al crear la solicitud" });
   }
 };
-
-
-// export const editarSolicitud = async (req, res) => {
-//   try {
-//     const { id_solicitud } = req.params;
-//     const {
-//       cedula_solicitante,
-//       placa_vehiculo,
-//       cedula_conductor,
-//       fecha,
-//       hora,
-//       origen,
-//       destino,
-//       estado,
-//       tipo_labor,
-//       prioridad,
-//       cantidad_pasajeros,
-//       equipo_o_carga,
-//       observaciones,
-//       hora_inicio_transporte,
-//       hora_fin_transporte,
-//       hora_total,
-//       tipo_incidente,
-//       gravedad,
-//       descripcion_incidente,
-//       puede_continuar
-//     } = req.body;
-
-//     console.log("Datos recibidos para editar la solicitud:", req.body);
-//     console.log("hora_inicio_transporte:", hora_inicio_transporte);
-//     console.log("hora_fin_transporte:", hora_fin_transporte);
-
-//     const id = Number(id_solicitud);
-//     const editarSolicitud = await prisma.solicitud.update({
-//       where: {
-//         id_solicitud: id,
-//       },
-//       data: {
-//         placa_vehiculo,
-//         cedula_conductor,
-//         estado,
-//         hora_inicio_transporte,
-//         hora_fin_transporte,
-//         hora_total,
-//         tipo_incidente,
-//         gravedad,
-//         descripcion_incidente,
-//         puede_continuar
-//       },
-//     });
-
-//     res.status(201).json(editarSolicitud);
-//     console.log("Datos recibidos para editar la solicitud:", req.body);
-//     console.log("hora_inicio_transporte:", hora_inicio_transporte);
-//     console.log("hora_fin_transporte:", hora_fin_transporte);
-//   } catch (error) {
-//     console.error("Error al editar la solicitud:", error);
-//     res.status(500).json({ error: "Error al editar la solicitud" });
-//   }
-// };
-
 
 export const editarSolicitud = async (req, res) => {
   try {
@@ -183,97 +118,6 @@ export const editarSolicitud = async (req, res) => {
   }
 };
 
-export const editarSolicitud2 = async (req, res) => {
-  try {
-    const { id_solicitud } = req.params;
-    const {
-      cedula_solicitante,
-      placa_vehiculo,
-      cedula_conductor,
-      fecha,
-      hora,
-      origen,
-      destino,
-      estado,
-      tipo_labor,
-      prioridad,
-      cantidad_pasajeros,
-      equipo_o_carga,
-      observaciones,
-      hora_inicio_transporte,
-      hora_fin_transporte,
-      hora_total,
-      tipo_incidente,
-      gravedad,
-      descripcion_incidente,
-      puede_continuar,
-    } = req.body;
-
-    console.log("Datos recibidos para editar la solicitud:", req.body);
-
-    const id = Number(id_solicitud);
-
-    // 1. Actualizar la solicitud
-    const solicitudActualizada = await prisma.solicitud.update({
-      where: { id_solicitud: id },
-      data: {
-        placa_vehiculo,
-        cedula_conductor,
-        estado,
-        hora_inicio_transporte,
-        hora_fin_transporte,
-        hora_total,
-        tipo_incidente,
-        gravedad,
-        descripcion_incidente,
-        puede_continuar,
-      },
-      include: {
-        vehiculo: true, 
-      },
-    });
-
-    if(solicitudActualizada.placa_vehiculo){
-      let nuevoEstadoVehiculo = null;
-
-      if(estado === "aceptada" || estado === "asignada"){
-        nuevoEstadoVehiculo = "asignado"
-      }
-
-      if(estado === "pendiente" || estado === "finalizada"){
-        nuevoEstadoVehiculo = "disponible"
-      }  
-      
-      if(nuevoEstadoVehiculo){
-        await prisma.vehiculo.update({
-          where:{
-            placa: solicitudActualizada.placa_vehiculo
-          },
-          data:{
-            estado: nuevoEstadoVehiculo
-          }
-        })
-      }
-    }
-
-
-    // if (estado === "aceptada" && estado === "asignada" && solicitudActualizada.placa_vehiculo) {
-    //   await prisma.vehiculo.update({
-    //     where: { placa: solicitudActualizada.placa_vehiculo },
-    //     data: {
-    //       estado: "asignado", 
-    //     },
-    //   });
-    // }
-
-    res.status(200).json(solicitudActualizada);
-  } catch (error) {
-    console.error("Error al editar la solicitud:", error);
-    res.status(500).json({ error: "Error al editar la solicitud" });
-  }
-};
-
-
 export const obtenerSolicitudes = async (req, res) => {
   try {
     const solicitud = await prisma.solicitud.findMany({
@@ -295,11 +139,11 @@ export const obtenerSolicitudes = async (req, res) => {
         vehiculo: {
           select: {
             tipo_vehiculo: true,
-            estado: true
+            estado: true,
           },
         },
       },
-      orderBy: {id_solicitud: "desc"}
+      orderBy: { id_solicitud: "desc" },
     });
     res.status(200).json(solicitud);
   } catch (error) {
@@ -339,7 +183,7 @@ export const obtenerSolicitudPorId = async (req, res) => {
     });
     res.status(200).json(solicitud);
   } catch (error) {
-    console.log("info", error)
+    console.log("info", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -442,8 +286,6 @@ export const obtenerSolicitudesPorConductorJson = async (req, res) => {
   }
 };
 
-
-
 export const obtenerSolicitudesPorSolicitanteJson = async (req, res) => {
   try {
     const { cedula } = req.params;
@@ -455,14 +297,14 @@ export const obtenerSolicitudesPorSolicitanteJson = async (req, res) => {
     });
     res.status(200).json(solicitudes);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ error: error.message });
   }
 };
 
 export const actualizarEstadoVehiculo = async (req, res) => {
   try {
-    const { placa, estado } = req.body;  // Recibe placa y nuevo estado
+    const { placa, estado } = req.body; // Recibe placa y nuevo estado
 
     if (!placa || !estado) {
       return res.status(400).json({ error: "Placa y estado son obligatorios" });
@@ -471,12 +313,116 @@ export const actualizarEstadoVehiculo = async (req, res) => {
     // Actualizar el estado del vehículo con la placa recibida
     const vehiculoActualizado = await prisma.vehiculo.update({
       where: { placa },
-      data: { estado },  // Actualiza el estado del vehículo
+      data: { estado }, // Actualiza el estado del vehículo
     });
 
     res.status(200).json(vehiculoActualizado); // Respuesta de éxito con el vehículo actualizado
   } catch (error) {
     console.error("Error al actualizar el estado del vehículo:", error);
-    res.status(500).json({ error: "Error al actualizar el estado del vehículo" });
+    res
+      .status(500)
+      .json({ error: "Error al actualizar el estado del vehículo" });
+  }
+};
+
+export const exportarSolicitudesExcel = async (req, res) => {
+  try {
+    const { fechaInicio, fechaFin } = req.query;
+
+    if (!fechaInicio) {
+      return res
+        .status(400)
+        .json({ error: "fechaInicio es requerida en el query param" });
+    }
+
+    // Construir rango de fechas
+    const fechaInicioDate = new Date(fechaInicio);
+    const fechaFinDate = fechaFin ? new Date(fechaFin) : new Date(fechaInicio);
+
+    // Opcional: asegurar que fechaFin tenga al menos el mismo día
+    // (como la columna es DATE, basta con gte/lte)
+    const solicitudes = await prisma.solicitud.findMany({
+      where: {
+        fecha: {
+          gte: fechaInicioDate,
+          lte: fechaFinDate,
+        },
+      },
+      include: {
+        usuario_solicitud_cedula_solicitanteTousuario: {
+          select: {
+            nombre: true,
+          },
+        },
+        usuario_solicitud_cedula_conductorTousuario: {
+          select: {
+            nombre: true,
+          },
+        },
+        vehiculo: {
+          select: {
+            placa: true,
+          },
+        },
+      },
+      orderBy: {
+        fecha: "asc",
+      },
+    });
+
+    // Mapear datos a filas para el Excel
+    const filas = solicitudes.map((s) => ({
+      Fecha: s.fecha ? formatearFecha(s.fecha) : "N/A",
+      Origen: s.origen || "",
+      Destino: s.destino || "",
+      Solicitante:
+        s.usuario_solicitud_cedula_solicitanteTousuario?.nombre || "",
+      Equipo_o_carga: s.equipo_o_carga || "",
+      Tipo_labor: s.tipo_labor || "",
+      Vehiculo_asignado: s.vehiculo.placa || "",
+      Conductor_asignado:
+        s.usuario_solicitud_cedula_conductorTousuario.nombre || "",
+      Observaciones: s.observaciones || "",
+      Hora_inicio_transporte: s.hora_inicio_transporte
+        ? formatearHora(s.hora_inicio_transporte)
+        : "N/A",
+      Hora_fin_transporte: s.hora_fin_transporte
+        ? formatearHora(s.hora_fin_transporte)
+        : "N/A",
+      Hora_total: s.hora_total 
+        ? formatearDuracion(s.hora_total)
+        : "N/A"
+    }));
+
+    // Crear workbook y hoja
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(filas);
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Solicitudes");
+
+    // Generar buffer del Excel
+    const buffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "buffer",
+    });
+
+    const nombreArchivo = fechaFin
+      ? `solicitudes_${fechaInicio}_a_${fechaFin}.xlsx`
+      : `solicitudes_${fechaInicio}.xlsx`;
+
+    // Headers para descarga
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${nombreArchivo}"`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    return res.send(buffer);
+  } catch (error) {
+    console.error("Error exportando solicitudes a Excel:", error);
+    return res.status(500).json({ error: "Error exportando solicitudes" });
   }
 };
