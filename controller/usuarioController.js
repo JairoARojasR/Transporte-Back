@@ -105,9 +105,6 @@ export const sincronizarUsuarios = async (req, res) => {
         console.log(` Usuario ya existe, omitido: ${emp.cedula}`);
         continue;
       }
-      // const nombreSinEspacios = emp.nombre.replace(/\s+/g, "");
-      // const contraseniaPlana = `${emp.cedula}_${nombreSinEspacios}`;
-      // const primerNombre = emp.nombre.split(" ")[0];
       const primerNombre = emp.nombre.split(" ")[0];
       const primeraLetra = primerNombre.charAt(0).toLowerCase();
       const ultimos4DigitosCedula = String(emp.cedula).slice(-4);
@@ -128,12 +125,6 @@ export const sincronizarUsuarios = async (req, res) => {
       creados.push(emp);
       console.log(`Usuario creado: ${emp.cedula}`);
     }
-
-    res.json({
-      mensaje: "Sincronización completada",
-      usuarios_creados: creados,
-      usuarios_omitidos: omitidos,
-    });
   } catch (error) {
     console.error("Error sincronizando empleados:", error);
     res.status(500).json({ error: "Error sincronizando empleados" });

@@ -21,7 +21,6 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       observaciones,
     } = req.body;
 
-    // 1. validar que la placa exista
     const validarPlaca = await prisma.vehiculo.findUnique({
       where: { placa: placa_vehiculo },
     });
@@ -30,7 +29,6 @@ export const registroInspeccionPreoperacional = async (req, res) => {
       return res.status(404).json({ error: "Vehículo no encontrado" });
     }
 
-    // 2. Crear la inspección
     const registro = await prisma.inspeccion_preoperacional.create({
       data: {
         placa_vehiculo,

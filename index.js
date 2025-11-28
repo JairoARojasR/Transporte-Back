@@ -9,6 +9,9 @@ import conductor_vehiculoRoutes from './routes/conductor_vehiculoRoutes.js'
 import inspeccionRoutes from './routes/inspeccionRoutes.js'
 import solicitudesRoutes from './routes/solicitudRoutes.js'
 import inicioSesionRoutes from './routes/inicioSesionRoutes.js'
+import nodeCron from "node-cron";  
+import { sincronizarUsuarios } from './controller/usuarioController.js';
+
 
 dotenv.config();
 
@@ -40,6 +43,16 @@ app.use("/api/conductor", conductor_vehiculoRoutes);
 app.use("/api/inspeccion", inspeccionRoutes);
 app.use("/api/solicitud", solicitudesRoutes);
 app.use("/api/inicio", inicioSesionRoutes);
+
+// nodeCron.schedule('*/5 * * * *', async () => {
+//   console.log("Ejecutando sincronización de usuarios...");
+//   try {
+//     await sincronizarUsuarios(); 
+//     console.log("Sincronización de usuarios completada.");
+//   } catch (error) {
+//     console.error("Error al sincronizar usuarios automáticamente:", error);
+//   }
+// });
 
 async function iniciarServidor() {
   try {

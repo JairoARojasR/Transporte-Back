@@ -282,7 +282,7 @@ export const obtenerVehiculosConInspeccionDeFecha = async (req, res) => {
     const vehiculos = await prisma.vehiculo.findMany({
       where: {
         estado: {
-          in: ["disponible"]
+          in: ["disponible", "asignado"]
         },
         inspeccion_preoperacional: {
           some: { fecha: { gte: inicio, lte: fin } }

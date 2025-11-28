@@ -6,9 +6,9 @@ import { requireAuth } from '../middlewares/requireAuth.js';
 import { requireRole } from "../middlewares/requireRole.js";
 
 const router = express.Router();
-router.get('/obtenerSolicitudes', obtenerSolicitudes)
-router.get('/obtenerSolicitud/:id', obtenerSolicitudPorId)
-router.post('/crearSolicitud' , crearSolicitud);
+router.get('/obtenerSolicitudes', requireAuth, requireRole([1]), obtenerSolicitudes)
+router.get('/obtenerSolicitud/:id', requireAuth, requireRole([1]), obtenerSolicitudPorId)
+router.post('/crearSolicitud' , crearSolicitud, requireAuth, requireRole([2]));
 router.put('/editarSolicitud/:id_solicitud' , editarSolicitud);
 router.get('/prueba/:cedula', obtenerSolicitudesPorConductorJson)
 router.get('/misSolicitudes', requireAuth, requireRole([8]), obtenerSolicitudesPorConductor)

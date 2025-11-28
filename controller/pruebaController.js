@@ -12,7 +12,6 @@ export const crearVehiculo = async (req, res) => {
       conductores,
     } = req.body;
 
-    //verificar que no exista un vehiculo con la misma placa
     const verificarPlaca = await prisma.vehiculo.findUnique({
       where: {
         placa: placa,
@@ -23,7 +22,6 @@ export const crearVehiculo = async (req, res) => {
       return res.status(404).json({ error: "Placa repetida" });
     }
 
-    //un conductor no puede estar como habitual en dos vehiculos diferentes
     const habitual = conductores.find((c) => c.tipo_conductor === "habitual");
 
     if (habitual) {
@@ -78,14 +76,12 @@ export const editarVehiculoPorPlaca = async (req, res) => {
       conductores,
     } = req.body;
 
-    // 1) Verificar que el vehículo exista
     const existente = await prisma.vehiculo.findUnique({ where: { placa } });
     if (!existente) {
       return res.status(404).json({ error: "Vehículo no encontrado" });
     }
 
-    // 2) Normalizar fecha (acepta null, "", "YYYY-MM-DD" o ISO)
-    let fechaUM = undefined; // undefined => no tocar el campo
+    let fechaUM = undefined; 
     if (fecha_ultimo_mantenimiento !== undefined) {
       if (
         fecha_ultimo_mantenimiento === null ||
@@ -106,7 +102,6 @@ export const editarVehiculoPorPlaca = async (req, res) => {
       }
     }
 
-    // 3) Armar objeto de actualización solo con campos enviados
     const dataUpdate = {};
     if (tipo_vehiculo !== undefined) dataUpdate.tipo_vehiculo = tipo_vehiculo;
     if (capacidad !== undefined) dataUpdate.capacidad = capacidad;
@@ -114,9 +109,7 @@ export const editarVehiculoPorPlaca = async (req, res) => {
     if (estado !== undefined) dataUpdate.estado = estado;
     if (fechaUM !== undefined) dataUpdate.fecha_ultimo_mantenimiento = fechaUM;
 
-    // 4) Si vienen conductores, validar y reemplazar
     if (Array.isArray(conductores)) {
-      // a) Validar que no haya más de un habitual en el payload
       const habituales = conductores.filter(
         (c) => c.tipo_conductor === "habitual"
       );
@@ -128,14 +121,13 @@ export const editarVehiculoPorPlaca = async (req, res) => {
           });
       }
 
-      // b) Validar que el habitual (si viene) no sea habitual en OTRO vehículo
       if (habituales.length === 1) {
         const cedHab = Number(habituales[0].cedula_conductor);
         const conflicto = await prisma.conductor_vehiculo.findFirst({
           where: {
             cedula_conductor: cedHab,
             tipo_conductor: "habitual",
-            placa_vehiculo: { not: placa }, // excluir el propio vehículo que estamos editando
+            placa_vehiculo: { not: placa }, 
           },
           select: { placa_vehiculo: true },
         });
@@ -146,20 +138,16 @@ export const editarVehiculoPorPlaca = async (req, res) => {
         }
       }
 
-      // c) Transacción: actualizar vehículo + reemplazar conductores
       const actualizado = await prisma.$transaction(async (tx) => {
-        // actualizar datos del vehículo
         const v = await tx.vehiculo.update({
           where: { placa },
           data: dataUpdate,
         });
 
-        // eliminar asignaciones actuales
         await tx.conductor_vehiculo.deleteMany({
           where: { placa_vehiculo: placa },
         });
 
-        // crear nuevas asignaciones (si el array viene vacío, queda sin conductores)
         if (conductores.length > 0) {
           await tx.conductor_vehiculo.createMany({
             data: conductores.map((c) => ({
@@ -170,7 +158,6 @@ export const editarVehiculoPorPlaca = async (req, res) => {
           });
         }
 
-        // devolver con relaciones
         const completo = await tx.vehiculo.findUnique({
           where: { placa },
           include: {
@@ -191,7 +178,6 @@ export const editarVehiculoPorPlaca = async (req, res) => {
       return res.status(200).json(actualizado);
     }
 
-    // 5) Si NO vienen conductores, solo actualizar datos del vehículo
     const actualizado = await prisma.vehiculo.update({
       where: { placa },
       data: dataUpdate,
@@ -275,17 +261,14 @@ export const obtenerVehiculoPorRegistroInspeccion = async (req, res) => {
   }
 };
 
-// GET /api/vehiculo/obtenerInspeccion?fecha=YYYY-MM-DD
 export const obtenerVehiculosConInspeccionDeFecha = async (req, res) => {
   try {
     const fechaStr = (req.query.fecha ?? new Date().toISOString().slice(0,10)).trim();
 
-    // Como tu columna es @db.Date, comparar por rango UTC del día es robusto
     const inicio = new Date(`${fechaStr}T00:00:00.000Z`);
     const fin    = new Date(`${fechaStr}T23:59:59.999Z`);
 
     const vehiculos = await prisma.vehiculo.findMany({
-      // Filtra SOLO los que tienen inspección en ese día
       where: {
         inspeccion_preoperacional: {
           some: { fecha: { gte: inicio, lte: fin } }
