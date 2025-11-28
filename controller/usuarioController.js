@@ -125,10 +125,16 @@ export const sincronizarUsuarios = async (req, res) => {
       creados.push(emp);
       console.log(`Usuario creado: ${emp.cedula}`);
     }
+
+    res.json({
+      mensaje: "Sincronización completada",
+      usuarios_creados: creados,
+      cantidad_usuarios_creados: creados.length,
+      usuarios_omitidos: omitidos,
+      cantidad_usuarios_omitidos: omitidos.length,
+    });
   } catch (error) {
     console.error("Error sincronizando empleados:", error);
     res.status(500).json({ error: "Error sincronizando empleados" });
   }
 };
-
-

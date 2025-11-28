@@ -74,7 +74,7 @@ export const editarSolicitud = async (req, res) => {
 
     const id = Number(id_solicitud);
 
-    // 1. Actualizar la solicitud
+    
     const solicitudActualizada = await prisma.solicitud.update({
       where: { id_solicitud: id },
       data: {
@@ -91,7 +91,7 @@ export const editarSolicitud = async (req, res) => {
       },
     });
 
-    // 2. REGLAS DE ESTADO DEL VEHÍCULO
+    
     if (solicitudActualizada.placa_vehiculo) {
       let nuevoEstadoVehiculo = null;
 
@@ -304,19 +304,19 @@ export const obtenerSolicitudesPorSolicitanteJson = async (req, res) => {
 
 export const actualizarEstadoVehiculo = async (req, res) => {
   try {
-    const { placa, estado } = req.body; // Recibe placa y nuevo estado
+    const { placa, estado } = req.body; 
 
     if (!placa || !estado) {
       return res.status(400).json({ error: "Placa y estado son obligatorios" });
     }
 
-    // Actualizar el estado del vehículo con la placa recibida
+    
     const vehiculoActualizado = await prisma.vehiculo.update({
       where: { placa },
-      data: { estado }, // Actualiza el estado del vehículo
+      data: { estado }, 
     });
 
-    res.status(200).json(vehiculoActualizado); // Respuesta de éxito con el vehículo actualizado
+    res.status(200).json(vehiculoActualizado); 
   } catch (error) {
     console.error("Error al actualizar el estado del vehículo:", error);
     res

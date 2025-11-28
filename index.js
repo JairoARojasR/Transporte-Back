@@ -44,10 +44,20 @@ app.use("/api/inspeccion", inspeccionRoutes);
 app.use("/api/solicitud", solicitudesRoutes);
 app.use("/api/inicio", inicioSesionRoutes);
 
-// nodeCron.schedule('*/5 * * * *', async () => {
+// nodeCron.schedule('*/2 * * * *', async () => {
 //   console.log("Ejecutando sincronización de usuarios...");
 //   try {
 //     await sincronizarUsuarios(); 
+//     console.log("Sincronización de usuarios completada.");
+//   } catch (error) {
+//     console.error("Error al sincronizar usuarios automáticamente:", error);
+//   }
+// });
+
+// nodeCron.schedule('0 0 */15 * *', async () => {
+//   console.log("Ejecutando sincronización de usuarios...");
+//   try {
+//     await sincronizarUsuarios();  
 //     console.log("Sincronización de usuarios completada.");
 //   } catch (error) {
 //     console.error("Error al sincronizar usuarios automáticamente:", error);
